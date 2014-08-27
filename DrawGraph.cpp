@@ -146,7 +146,36 @@ void DrawGraph(HDC hdc, int x, int y, int width, int height, int type, double ti
 		}
 	}
 	//ShowWindow(GetDlgItem(GetParent(hWnd), IDC_PROGRESS), 0);
-	DrawGrid(hdc, x, y, width, height);
+	int stepX = 100;
+	double sd = delta * 100;
+	for (int i = 0; ; i++)
+	{
+		if (sd > 0 && sd < 2.5 * pow(10, i))
+		{
+			if (2.5 * pow(10, i) - sd > sd) stepX = 100;
+			else stepX = (double) 2.5 * pow(10, i) / delta;
+			break;
+		}
+		else if (sd > 2.5 * pow(10, i) && sd < 5 * pow(10, i))
+		{
+			if (5 * pow(10, i) - sd > sd - 2.5 * pow(10, i)) stepX = (double)2.5 * pow(10, i) / delta;
+			else stepX = (double) 5 * pow(10, i) / delta;
+			break;
+		}
+		else if (sd > 5 * pow(10, i) && sd < 10 * pow(10, i))
+		{
+			if (10 * pow(10, i) - sd > sd - 5 * pow(10, i)) stepX = (double)5 * pow(10, i) / delta;
+			else stepX = (double)10 * pow(10, i) / delta;
+			break;
+		}
+		else if (sd > 10 * pow(10, i) && sd < 20 * pow(10, i))
+		{
+			if (20 * pow(10, i) - sd > sd - 10 * pow(10, i)) stepX = (double)10 * pow(10, i) / delta;
+			else stepX = (double)20 * pow(10, i) / delta;
+			break;
+		}
+	}
+	DrawGrid(hdc, x, y, width, height, stepX);
 	
 	LOGFONT lFont;
 	ZeroMemory(&lFont, sizeof(lFont));
@@ -158,7 +187,10 @@ void DrawGraph(HDC hdc, int x, int y, int width, int height, int type, double ti
 	
 	std::wstringstream sstream;
 	sstream.precision(4);
-	sstream << _T("H = ") << maxHeight << _T("mm");
+	//sstream << _T("H = ") << maxHeight << _T("mm");
+	sstream << _T("step = ") << stepX*delta << _T("h ");
+	sstream << _T("delta = ") << delta << _T("h/pix ");
+	sstream << _T("stepX = ") << stepX << _T("pix");
 	TextOut(hdc, x + MARGIN, y, sstream.str().c_str(), sstream.str().size());
 
 	font = SelectFont(hdc, &font);

@@ -61,6 +61,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	//MyRegisterClass(hInstance, WndInfoProc, szInfoClass, COLOR_WINDOW);
 	MyRegisterChild(hInstance, WndLayersProc, szLayersClass, COLOR_WINDOW);
 
+	// Включить GDI+
+	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+	ULONG_PTR gdiplusToken;
+	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
 	// Выполнить инициализацию приложения:
 	if (!InitInstance (hInstance, nCmdShow))
 	{
@@ -85,6 +90,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		}
 	}
 
+	Gdiplus::GdiplusShutdown(gdiplusToken);
 	return (int) msg.wParam;
 }
 
@@ -283,10 +289,45 @@ void SNOWMODEL_OnSize(HWND hWnd, UINT state, int cx, int cy)
 		MoveWindow(GetDlgItem(hWnd,IDC_INFO_WINDOW), (int)(INFOWND_X*diffW), (int)(INFOWND_Y*diffH), (int)(INFOWND_WIDTH*diffW), (int)(INFOWND_HEIGHT*diffH), TRUE);
 		MoveWindow(GetDlgItem(hWnd,IDC_GRAPH_WINDOW), (int)(GRAPHWND_X*diffW), (int)(GRAPHWND_Y*diffH), (int)(GRAPHWND_WIDTH*diffW), (int)(GRAPHWND_HEIGHT*diffH), TRUE);
 }
+
+int GetEncoderClsid(const TCHAR* format, CLSID* pClsid)
+{
+	using namespace Gdiplus;
+
+	UINT  num = 0;          // number of image encoders
+	UINT  size = 0;         // size of the image encoder array in bytes
+
+	ImageCodecInfo* pImageCodecInfo = NULL;
+
+	GetImageEncodersSize(&num, &size);
+	if (size == 0)
+		return -1;  // Failure
+
+	pImageCodecInfo = (ImageCodecInfo*)(malloc(size));
+	if (pImageCodecInfo == NULL)
+		return -1;  // Failure
+
+	GetImageEncoders(num, size, pImageCodecInfo);
+
+	for (UINT j = 0; j < num; ++j)
+	{
+		if (wcscmp(pImageCodecInfo[j].MimeType, format) == 0)
+		{
+			*pClsid = pImageCodecInfo[j].Clsid;
+			free(pImageCodecInfo);
+			return j;  // Success
+		}
+	}
+
+	free(pImageCodecInfo);
+	return -1;  // Failure
+}
+
 void SNOWMODEL_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 {
 	OPENFILENAME ofn;
 	TCHAR szFilter[] = _T("Snow Data files(*.SLM)\0*.slm\0All files(*.*)\0*.*\0");
+	TCHAR szImgFilter[] = _T("PNG(*.png)\0*.png\0All files(*.*)\0*.*\0");
 	TCHAR szFileName[500] = _T("");
 	TCHAR szFileTitle[500] = _T("");
 	
@@ -341,6 +382,42 @@ void SNOWMODEL_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 				wstr += _T(".slm");
 			CSnow::current()->setFileName(wstr);
 			CSnow::current()->writeFile();
+			SetWindowText(hWnd, CSnow::current()->getName().c_str());
+		}
+		break;
+	case IDM_FILESAVEGRAPH:
+		ZeroMemory(&ofn, sizeof(ofn));
+		ofn.lStructSize = sizeof(OPENFILENAME);
+		ofn.hwndOwner = hWnd;
+		ofn.lpstrFilter = szImgFilter;
+		ofn.lpstrFile = szFileName;
+		ofn.nMaxFile = sizeof(szFileName);
+		ofn.lpstrFileTitle = szFileTitle;
+		ofn.nMaxFileTitle = sizeof(szFileTitle);
+		ofn.Flags = OFN_PATHMUSTEXIST;
+		if (GetSaveFileName(&ofn)){
+			std::wstring wstr(szFileName);
+			if (ofn.nFilterIndex == 1 && wstr.substr(wstr.size() - 4, 4) != _T(".png"))
+				wstr += _T(".png");
+			//CSnow::current()->setFileName(wstr);
+			//CSnow::current()->writeFile();
+			/////////////////////////////////////////////////
+			HDC hdc = GetDC(hWnd);
+			HDC hdcLayer = CreateCompatibleDC(hdc);
+			HBITMAP	hBmp = CreateCompatibleBitmap(hdc, 1000, 500);
+			SelectObject(hdcLayer, hBmp);
+			
+			PatBlt(hdcLayer, 0, 0, 1000, 500, WHITENESS);
+			DrawGraph(hdcLayer, 50, 50, 800, 400, 1, 0, 400);
+						
+			Gdiplus::Bitmap bmp(hBmp, NULL);
+			CLSID encoderClsid;
+			GetEncoderClsid(_T("image/png"), &encoderClsid);
+			bmp.Save(wstr.c_str(), &encoderClsid, NULL);
+			
+			ReleaseDC(hWnd, hdc);
+
+			/////////////////////////////////////////////////
 			SetWindowText(hWnd, CSnow::current()->getName().c_str());
 		}
 		break;
