@@ -94,7 +94,7 @@ void GRAPHWND_OnPaint(HWND hWnd)
 {
 	PAINTSTRUCT ps;
 	int dx;
-	static int timeS, timeE;
+	static double timeS, timeE;
 	static double delta;
 	RECT rect;
 	GetClientRect(hWnd, &rect);
@@ -106,12 +106,14 @@ void GRAPHWND_OnPaint(HWND hWnd)
 		timeS = GetDlgItemInt(hWnd, IDC_EDIT_S, NULL, TRUE);
 		timeE = GetDlgItemInt(hWnd, IDC_EDIT_E, NULL, TRUE);
 		
-		delta = (double)(timeE - timeS)/rect.right;
+		delta = (timeE - timeS)/rect.right;
 
 		for (int i = 0; i < LAYERS_COUNT; i++)
 			PatBlt(hdcLayers[i], 0, 0, rect.right, rect.bottom, WHITENESS);
 
 		DrawGraph(hdcLayers[0], 0, 0, rect.right, rect.bottom - BUTTON_HEIGHT - 1, state, timeS, timeE);
+		DrawGrid(hdcLayers[0], 0, 0, rect.right, rect.bottom - BUTTON_HEIGHT - 1, timeS, timeE);
+		//DrawTimeLabels(hdcLayers[0], 0, 0, rect.right, timeS, timeE);
 		
 		if (GetMenuState(GetMenu(GetParent(hWnd)), IDM_TEMPERATURE, MF_CHECKED))
 			DrawTemperature(hdcLayers[1], 0, 0, rect.right, rect.bottom - BUTTON_HEIGHT - 1, timeS, timeE);
