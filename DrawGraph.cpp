@@ -35,6 +35,13 @@ void DrawGrid(HDC hdc, int x, int y, int width, int height, double timeS, double
 	double delta = (timeE - timeS) / width;
 	double sd = delta * stepX;
 	double intervals[] = { 0.25, 0.5, 1, 3, 6, 12, 24, 48, 24 * 7, 24 * 7 * 2, 24 * 7 * 4 };
+
+	if (delta == 0)
+	{
+		DrawGrid(hdc, x, y, width, height, 0, stepY);
+		return;
+	}
+
 	if (sd < intervals[0])
 		sd = intervals[0];
 	else if (sd >= intervals[sizeof(intervals) / sizeof(double)-1])
@@ -61,6 +68,9 @@ void DrawTimeLabels(HDC hdc, int x, int y, int width, double timeS, double timeE
 	double sd = delta * stepX;
 	double intervals[] = {0.25, 0.5, 1, 3, 6, 12, 24, 48, 24*7, 24*7*2, 24*7*4};
 	
+	if (delta == 0)
+		return;
+
 	if (sd < intervals[0])
 		sd = intervals[0];
 	else if (sd >= intervals[sizeof(intervals)/sizeof(double) - 1])

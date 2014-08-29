@@ -129,7 +129,7 @@ void GRAPHWND_OnPaint(HWND hWnd)
 	}
 		
 	HDC hdc = BeginPaint(hWnd, &ps);
-	dx = (int)((CSnow::current()->getTime() - timeS)/delta);
+	dx = delta > 0 ? (int)((CSnow::current()->getTime() - timeS)/delta) : 0;
 	BitBlt(hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom, hdcLayers[0], ps.rcPaint.left, ps.rcPaint.top, SRCCOPY);
 	BitBlt(hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom, hdcLayers[1], ps.rcPaint.left, ps.rcPaint.top, SRCAND);
 	DrawCursor(hdc, rect.left + dx, rect.top, rect.bottom);

@@ -20,6 +20,7 @@ HWND hEditLayerDlg;
 BOOL bEditLayer;
 BOOL bInvalidateGraph;
 BOOL bInvalidateTemperature;
+int dResolition;
 TCHAR szTitle[MAX_LOADSTRING];					// “екст строки заголовка
 TCHAR szWindowClass[MAX_LOADSTRING];			// им€ класса главного окна
 TCHAR szGraphClass[MAX_LOADSTRING];
@@ -37,6 +38,7 @@ LRESULT CALLBACK	WndLayersProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	TempDlgProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	EditLayerDlgProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
+INT_PTR CALLBACK	Resolution(HWND, UINT, WPARAM, LPARAM);
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
@@ -399,30 +401,37 @@ void SNOWMODEL_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 			std::wstring wstr(szFileName);
 			if (ofn.nFilterIndex == 1 && wstr.substr(wstr.size() - 4, 4) != _T(".png"))
 				wstr += _T(".png");
-			//CSnow::current()->setFileName(wstr);
-			//CSnow::current()->writeFile();
 			/////////////////////////////////////////////////
+			dResolition = 1;
+			if (DialogBox(hInst, MAKEINTRESOURCE(IDD_RESOLUTION_DLG), hWnd, Resolution) != IDOK)
+				break;
+
+			double timeS, timeE;
+			int width = 500;
+			int height = 1200;	
+			HWND hGraphWnd = GetDlgItem(hWnd, IDC_GRAPH_WINDOW);
+			if (hGraphWnd)
+			{
+				timeS = GetDlgItemInt(hGraphWnd, IDC_EDIT_S, NULL, TRUE);
+				timeE = GetDlgItemInt(hGraphWnd, IDC_EDIT_E, NULL, TRUE);
+				if (timeE > timeS) width = (timeE - timeS) / dResolition;
+			}
+
 			HDC hdc = GetDC(hWnd);
 			HDC hdcLayer = CreateCompatibleDC(hdc);
-			HBITMAP	hBmp = CreateCompatibleBitmap(hdc, 1000, 1400);
+			HBITMAP	hBmp = CreateCompatibleBitmap(hdc, width, height);
 			SelectObject(hdcLayer, hBmp);
 			
-			PatBlt(hdcLayer, 0, 0, 1000, 1400, WHITENESS);
-			DrawAllGraphs(hdcLayer, 0, 0, 1000, 1400, 100, 1500);
-			/*PatBlt(hdcLayer, 0, 0, 1000, 1400, WHITENESS);
-			DrawGraph(hdcLayer, 50, 50, 800, 400, 1, timeS, timeE);
-			DrawTimeLabels(hdcLayer, 50, 450, 800, timeS, timeE);
-			DrawGraph(hdcLayer, 50, 500, 800, 400, 0, timeS, timeE);
-			DrawTemperature(hdcLayer, 50, 1000, 800, 300, timeS, timeE);
-			DrawGrid(hdcLayer, 50, 50, 800, 1300, timeS, timeE, 100, 0);*/
-									
+			PatBlt(hdcLayer, 0, 0, width, height, WHITENESS);
+			DrawAllGraphs(hdcLayer, 0, 0, width, height, timeS, timeE);
+												
 			Gdiplus::Bitmap bmp(hBmp, NULL);
 			CLSID encoderClsid;
 			GetEncoderClsid(_T("image/png"), &encoderClsid);
 			bmp.Save(wstr.c_str(), &encoderClsid, NULL);
 			
 			ReleaseDC(hWnd, hdc);
-
+			
 			/////////////////////////////////////////////////
 			SetWindowText(hWnd, CSnow::current()->getName().c_str());
 		}
@@ -650,6 +659,27 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
 		{
+			EndDialog(hDlg, LOWORD(wParam));
+			return (INT_PTR)TRUE;
+		}
+		break;
+	}
+	return (INT_PTR)FALSE;
+}
+
+INT_PTR CALLBACK Resolution(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(lParam);
+	switch (message)
+	{
+	case WM_INITDIALOG:
+		SetDlgItemText(hDlg, IDC_RESOLUTION, _T("1"));
+		return (INT_PTR)TRUE;
+
+	case WM_COMMAND:
+		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
+		{
+			dResolition = GetDlgItemInt(hDlg, IDC_RESOLUTION, NULL, TRUE);
 			EndDialog(hDlg, LOWORD(wParam));
 			return (INT_PTR)TRUE;
 		}
