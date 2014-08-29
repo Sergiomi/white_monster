@@ -407,14 +407,14 @@ void SNOWMODEL_OnCommand(HWND hWnd, int id, HWND hwndCtl, UINT codeNotify)
 			HBITMAP	hBmp = CreateCompatibleBitmap(hdc, 1000, 1400);
 			SelectObject(hdcLayer, hBmp);
 			
-			double timeS = 0;
-			double timeE = 1500;
 			PatBlt(hdcLayer, 0, 0, 1000, 1400, WHITENESS);
+			DrawAllGraphs(hdcLayer, 0, 0, 1000, 1400, 100, 1500);
+			/*PatBlt(hdcLayer, 0, 0, 1000, 1400, WHITENESS);
 			DrawGraph(hdcLayer, 50, 50, 800, 400, 1, timeS, timeE);
 			DrawTimeLabels(hdcLayer, 50, 450, 800, timeS, timeE);
 			DrawGraph(hdcLayer, 50, 500, 800, 400, 0, timeS, timeE);
 			DrawTemperature(hdcLayer, 50, 1000, 800, 300, timeS, timeE);
-			DrawGrid(hdcLayer, 50, 50, 800, 1300, timeS, timeE, 100, 0);
+			DrawGrid(hdcLayer, 50, 50, 800, 1300, timeS, timeE, 100, 0);*/
 									
 			Gdiplus::Bitmap bmp(hBmp, NULL);
 			CLSID encoderClsid;

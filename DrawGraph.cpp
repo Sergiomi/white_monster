@@ -34,48 +34,6 @@ void DrawGrid(HDC hdc, int x, int y, int width, int height, double timeS, double
 {
 	double delta = (timeE - timeS) / width;
 	double sd = delta * stepX;
-	/*for (int i = 0; ; i++)
-	{
-	if (sd >= 0 && sd < 1)
-	{
-	stepX = 100;
-	break;
-	}
-	if (sd >= pow(10, i) && sd < 2.25* pow(10, i))
-	{
-	stepX = 2 * pow(10, i) / delta;
-	break;
-	}
-	if (sd >= 2.25*pow(10, i) && sd < 3.25* pow(10, i))
-	{
-	stepX = 2.5 * pow(10, i) / delta;
-	break;
-	}
-	if (sd >= 3.25*pow(10, i) && sd < 4.5* pow(10, i))
-	{
-	stepX = 4 * pow(10, i) / delta;
-	break;
-	}
-	if (sd >= 4.5*pow(10, i) && sd < 7.5* pow(10, i))
-	{
-	stepX = 5 * pow(10, i) / delta;
-	break;
-	}
-	if (sd >= 7.5*pow(10, i) && sd < 15* pow(10, i))
-	{
-	stepX = 10 * pow(10, i) / delta;
-	break;
-	}
-	}*/
-	//if (sd >= 0 && sd < 0.5) stepX = stepX;
-	//else if (sd >= 0.5 && sd < 3.5) stepX = (int)(1 / delta + 0.5);
-	//else if (sd >= 3 && sd < 9) stepX = (int)(6 / delta + 0.5);
-	//else if (sd >= 9 && sd < 18) stepX = (int)(12 / delta + 0.5);
-	//else if (sd >= 18 && sd < 100) stepX = (int)(24 / delta + 0.5);
-	////else if (sd >= 36 && sd < 72) stepX = 48 / delta;
-	////else if (sd >= 72 && sd < 132) stepX = 96 / delta;
-	//else if (sd >= 100 && sd < 550) stepX = (int)(168 / delta + 0.5);
-	//else if (sd >= 550) stepX = (int)(672 / delta + 0.5);
 	double intervals[] = { 0.25, 0.5, 1, 3, 6, 12, 24, 48, 24 * 7, 24 * 7 * 2, 24 * 7 * 4 };
 	if (sd < intervals[0])
 		sd = intervals[0];
@@ -158,7 +116,7 @@ void DrawTimeLabels(HDC hdc, int x, int y, int width, double timeS, double timeE
 	font = SelectFont(hdc, font);
 
 	SetTextAlign(hdc, TA_CENTER);
-	for (int i = 2*stepX, j = 2; i < width - stepX; i += 2*stepX, j+=2)
+	for (int i = 2*stepX, j = 2; i < width - stepX/2; i += 2*stepX, j+=2)
 	{
 		std::wstringstream sstream;
 		sstream << j*step;
@@ -316,4 +274,43 @@ void DrawGraph(HDC hdc, int x, int y, int width, int height, int type, double ti
 	DeleteFont(font);
 
 	//DrawGrid(hdc, x, y, width, height, timeS, timeE);
+}
+
+void DrawAllGraphs(HDC hdc, int x, int y, int width, int height, double timeS, double timeE)
+{
+	int space = 80;
+	
+	DrawGraph(hdc, x, y + space, width, height*0.4 - space, 1, timeS, timeE);
+	DrawGraph(hdc, x, y + height*0.4 + space, width, height*0.4 - space, 0, timeS, timeE);
+	DrawTemperature(hdc, x, y + height*0.8 + space, width, height*0.2 - space - 40, timeS, timeE);
+	DrawGrid(hdc, x, y, width, height, timeS, timeE, 100, 0);
+
+	DrawGrid(hdc, x, y + space, width, height*0.4 - space, 0);
+	DrawGrid(hdc, x, y + height*0.4 + space, width, height*0.4 - space, 0);
+	DrawGrid(hdc, x, y + height*0.8 + space, width, height*0.2 - space - 40, 0);
+
+	DrawTimeLabels(hdc, x, y + height*0.4, width, timeS, timeE);
+	DrawTimeLabels(hdc, x, y + height*0.8, width, timeS, timeE);
+	DrawTimeLabels(hdc, x, y + height - 40, width, timeS, timeE);
+
+	LOGFONT lFont;
+	ZeroMemory(&lFont, sizeof(lFont));
+	lFont.lfHeight = 24;
+	lFont.lfWeight = FW_BOLD;
+	wcscpy_s(lFont.lfFaceName, WINDOW_FONT);
+	HFONT font = CreateFontIndirect(&lFont);
+	font = SelectFont(hdc, font);
+
+	std::wstring str;
+	SetTextAlign(hdc, TA_CENTER);
+	std::wstringstream sstream;
+	sstream << _T("Time interval ") << timeS << _T(" - ") << timeE << _T(" hours");
+	TextOut(hdc, x + width / 2, y, sstream.str().c_str(), sstream.str().size());
+	str = _T("Structure");
+	TextOut(hdc, x + width/2, y + space/2, str.c_str(), str.size());
+	str = _T("Density");
+	TextOut(hdc, x + width / 2, y + height*0.4 + space/2, str.c_str(), str.size());
+	str = _T("Temperature");
+	TextOut(hdc, x + width / 2, y + height*0.8 + space/2, str.c_str(), str.size());
+	SetTextAlign(hdc, TA_LEFT);
 }
